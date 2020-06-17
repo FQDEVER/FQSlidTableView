@@ -1,0 +1,6 @@
+framework module Pods_TestSlidingControlView {
+  umbrella header "Pods-TestSlidingControlView-umbrella.h"
+
+  export *
+  module * { export * }
+}
