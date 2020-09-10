@@ -6,20 +6,16 @@
 //  Copyright © 2020 星砺达. All rights reserved.
 //
 
-#import "QRFQSlidingControlView.h"
+#import "QRFQSlidTableView.h"
 #import <Masonry/Masonry.h>
 #import "EXFQCustomBtn.h"
 
 #define FQSCREEN_WIDTH ([UIScreen mainScreen].bounds.size.width)
 #define FQSCREEN_HEIGHT ([UIScreen mainScreen].bounds.size.height)
+#define kAppBottomMargin 0
+#define KEY_WINDOW        [[UIApplication sharedApplication] keyWindow]
 
-//#define kAppBottomMargin 0
-//#define _fqTableViewOpenY 125
-//#define _fqTableViewHeaderH 69
-//#define _fqTableViewCloseY FQSCREEN_HEIGHT - _fqTableViewHeaderH - kAppBottomMargin
-//#define kTableViewH SCREEN_HEIGHT - _fqTableViewOpenY
-
-@interface QRFQSlidingControlView ()<UITableViewDelegate,UITableViewDataSource,UIGestureRecognizerDelegate,UIScrollViewDelegate>
+@interface QRFQSlidTableView ()<UITableViewDelegate,UITableViewDataSource,UIGestureRecognizerDelegate,UIScrollViewDelegate>
 {
     struct {
         unsigned int didSelectItemAtIndex :1;
@@ -27,6 +23,8 @@
     }_delegateFlags;
     struct {
         unsigned int cellForItemAtIndex   :1;
+        unsigned int viewForHeaderInSection : 1;
+        unsigned int numberOfItemsInPagerView : 1;
     }_dataSourceFlags;
 }
 
@@ -54,11 +52,6 @@
  视图收起时.containerView与顶部的距离
  */
 @property (nonatomic, assign) CGFloat fqTableViewCloseY;
-
-/**
- 视图收起时.topContentView与底部的距离
-*/
-@property (nonatomic, assign) CGFloat fqAppBottomMargin;
 
 /*
  hasOptionTable: 记录当前是否可操作tableView
@@ -89,16 +82,21 @@
 
 @end
 
-@implementation QRFQSlidingControlView
+@implementation QRFQSlidTableView
 
 
--(instancetype)init{
+-(instancetype)initWithSuperView:(UIView *)superView{
     if (self            = [super init]) {
-        _fqAppBottomMargin = 0;
+        self.userInteractionEnabled = NO;
+        _fq_superView = superView;
         _fqTableViewOpenY = 125.0f;
         _fqTableViewHeaderH = 69.0f;
         _tableViewRowH = 44.0f;
-        _fqTableViewCloseY = FQSCREEN_HEIGHT - _fqTableViewHeaderH - _fqAppBottomMargin;
+        _topTableViewMargin = 0;
+        _tableHeaderViewH = CGFLOAT_MIN;
+        _fqTableViewCloseY = FQSCREEN_HEIGHT - _fqTableViewHeaderH - kAppBottomMargin;
+        _hasTableViewEnable = YES;
+        _hasShowCoverBtn = YES;
         [self creatUI];
         self.hasFirstOption = YES;
     }
@@ -111,53 +109,71 @@
         make.top.left.right.bottom.offset(0);
     }];
     
-    [self addSubview:self.containerView];
-    [self.containerView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.offset(_fqTableViewOpenY);
-        make.left.right.bottom.offset(0);
-    }];
+    if (self.fq_superView) {
+        [self.fq_superView addSubview:self.containerView];
+    }else{
+        [KEY_WINDOW addSubview:self.containerView];
+    }
+    self.containerView.frame = CGRectMake(0, _fqTableViewCloseY, FQSCREEN_WIDTH, FQSCREEN_HEIGHT - _fqTableViewOpenY);
+//    [self.containerView mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.top.offset(_fqTableViewCloseY);
+//        make.left.right.bottom.offset(0);
+//    }];
     
     self.topContentView.frame = CGRectMake(0, 0, FQSCREEN_WIDTH, _fqTableViewHeaderH);
     [self.containerView addSubview:self.topContentView];
-    [self.topContentView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.left.right.offset(0);
-        make.height.mas_equalTo(_fqTableViewHeaderH);
-    }];
+//    [self.topContentView mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.top.left.right.offset(0);
+//        make.height.mas_equalTo(_fqTableViewHeaderH);
+//    }];
     
+    self.tableView.frame = CGRectMake(0, _fqTableViewHeaderH + kAppBottomMargin + _topTableViewMargin, FQSCREEN_WIDTH, FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH - _topTableViewMargin);
     [self.containerView addSubview:self.tableView];
-    [self.tableView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.topContentView.mas_bottom);
-        make.left.right.offset(0);
-        make.bottom.offset(0);
-        make.height.mas_equalTo(FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH);
-    }];
+//    [self.tableView mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.top.equalTo(self.topContentView.mas_bottom);
+//        make.left.right.offset(0);
+//        make.bottom.offset(0);
+//        make.height.mas_equalTo(FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH);
+//    }];
 }
 
 -(void)setFqTableViewHeaderH:(CGFloat)fqTableViewHeaderH
 {
     _fqTableViewHeaderH = fqTableViewHeaderH;
     
-    [self.topContentView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(_fqTableViewHeaderH);
-    }];
+    self.topContentView.FQ_height = _fqTableViewHeaderH;
+//    [self.topContentView mas_updateConstraints:^(MASConstraintMaker *make) {
+//        make.height.mas_equalTo(_fqTableViewHeaderH);
+//    }];
     
-    _fqTableViewCloseY = FQSCREEN_HEIGHT - _fqTableViewHeaderH - _fqAppBottomMargin;
-    [self.tableView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH);
-    }];
+    _fqTableViewCloseY = FQSCREEN_HEIGHT - _fqTableViewHeaderH - kAppBottomMargin;
+    self.containerView.frame = CGRectMake(0, _fqTableViewCloseY, FQSCREEN_WIDTH, FQSCREEN_HEIGHT - _fqTableViewOpenY);
+    self.tableView.FQ_y = _fqTableViewHeaderH + kAppBottomMargin + _topTableViewMargin;
+    self.tableView.FQ_height = FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH - _topTableViewMargin;
+//    [self.tableView mas_updateConstraints:^(MASConstraintMaker *make) {
+//        make.height.mas_equalTo(FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH);
+//    }];
 }
 
 -(void)setFqTableViewOpenY:(CGFloat)fqTableViewOpenY
 {
     _fqTableViewOpenY = fqTableViewOpenY;
     
-    [self.containerView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.top.offset(_fqTableViewOpenY);
-    }];
-    
-    [self.tableView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH);
-    }];
+//    self.containerView.FQ_y = _fqTableViewOpenY;
+//    [self.containerView mas_updateConstraints:^(MASConstraintMaker *make) {
+//        make.top.offset(_fqTableViewOpenY);
+//    }];
+    self.tableView.FQ_height = FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH - _topTableViewMargin;
+//    [self.tableView mas_updateConstraints:^(MASConstraintMaker *make) {
+//        make.height.mas_equalTo(FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH);
+//    }];
+}
+
+-(void)setTopTableViewMargin:(CGFloat)topTableViewMargin
+{
+    _topTableViewMargin = topTableViewMargin;
+    self.tableView.FQ_y = _fqTableViewHeaderH + kAppBottomMargin + _topTableViewMargin;
+    self.tableView.FQ_height = FQSCREEN_HEIGHT - _fqTableViewOpenY - _fqTableViewHeaderH - _topTableViewMargin;
 }
 
 -(void)setTableViewRowH:(CGFloat)tableViewRowH
@@ -166,21 +182,44 @@
     self.tableView.rowHeight = tableViewRowH;
 }
 
+-(void)setHasShowCoverBtn:(BOOL)hasShowCoverBtn
+{
+    _hasShowCoverBtn = hasShowCoverBtn;
+    self.coverBtn.hidden = !hasShowCoverBtn;
+}
+
 #pragma mark - 事件处理
 
 /// 收起遮罩.下滑tableView
 -(void)dismissCoverView{
+    
+    if (self.containerView.FQ_y == self.fqTableViewCloseY) {
+        return;
+    }
     [UIView animateWithDuration:0.33 animations:^{
         self.coverBtn.alpha     = 0.0f;
+        self.tableView.FQ_y = self.fqTableViewHeaderH + kAppBottomMargin;
         self.containerView.FQ_y = self.fqTableViewCloseY;
+    }completion:^(BOOL finished) {
+        if (self.clickDismissCoverView) {
+            self.clickDismissCoverView();
+        }
     }];
 }
 
 /// 展示遮罩按钮
 -(void)showCoverView{
+    if (self.containerView.FQ_y == self.fqTableViewOpenY) {
+        return;
+    }
     [UIView animateWithDuration:0.33 animations:^{
         self.coverBtn.alpha     = 1.0f;
+        self.tableView.FQ_y = self.fqTableViewHeaderH + self.topTableViewMargin;
         self.containerView.FQ_y = self.fqTableViewOpenY;
+    }completion:^(BOOL finished) {
+        if (self.clickShowCoverView) {
+            self.clickShowCoverView();
+        }
     }];
 }
 
@@ -198,6 +237,14 @@
         return [_dataSource fqSlidTableView:self cellForItemAtIndex:indexPath.row];
     }
     NSAssert(NO, @"pagerView cellForItemAtIndex: is nil!");
+    return nil;
+}
+
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    if (_dataSourceFlags.viewForHeaderInSection) {
+        return [_dataSource fqSlidTableView:self viewForHeaderInSection:section];
+    }
     return nil;
 }
 
@@ -221,12 +268,27 @@
 }
 
 /**
+ register pager view headerView with class
+*/
+- (void)registerClass:(nullable Class)aClass forHeaderFooterViewReuseIdentifier:(NSString *)identifier{
+    [_tableView registerClass:aClass forHeaderFooterViewReuseIdentifier:identifier];
+}
+
+/**
  dequeue reusable cell for pagerView
  */
 - (__kindof UITableViewCell *)dequeueReusableCellWithReuseIdentifier:(NSString *)identifier forIndex:(NSInteger)index
 {
     UITableViewCell * cell = [_tableView dequeueReusableCellWithIdentifier:identifier forIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
     return cell;
+}
+
+/**
+ dequeue reusable headerView for pagerView
+*/
+- (nullable __kindof UITableViewHeaderFooterView *)dequeueReusableHeaderFooterViewWithIdentifier:(NSString *)identifier{
+    UITableViewHeaderFooterView * headerView = [_tableView dequeueReusableHeaderFooterViewWithIdentifier:identifier];
+    return headerView;
 }
 
 -(void)reloadData{
@@ -247,6 +309,7 @@
     return YES;
 }
 
+
 -(void)panGestureRecognizer:(UIPanGestureRecognizer *)pan{
     
     UIView *tempView                      = self.containerView;
@@ -257,24 +320,34 @@
         case UIGestureRecognizerStateBegan:
         {
             //找出最开始的手势在那个视图中.为后续手势做依据
-            CGPoint locationPoint                 = [pan locationInView:self.containerView];
-            self.hasContainsTopContent            = CGRectContainsPoint(self.topContentView.frame, locationPoint);
-            //如果是操作在topContentView.则模拟苹果系统.tableView不做滚动.只负责整体视图的上移动或者下移动
-            if (self.hasContainsTopContent) {
-                self.hasFirstOption                   = NO;
-                self.hasOptionTable                   = NO;
-                self.tableView.scrollEnabled          = NO;
-                self.tableView.userInteractionEnabled = NO;
-//                self.tableView.contentOffset          = CGPointZero;
+            if (self.hasTableViewEnable) {
+                CGPoint locationPoint                 = [pan locationInView:self.containerView];
+                self.hasContainsTopContent            = CGRectContainsPoint(self.topContentView.frame, locationPoint);
+                //如果是操作在topContentView.则模拟苹果系统.tableView不做滚动.只负责整体视图的上移动或者下移动
+                if (self.hasContainsTopContent) {
+                    self.hasFirstOption                   = NO;
+                    self.hasOptionTable                   = NO;
+                    self.tableView.scrollEnabled          = NO;
+                    self.tableView.userInteractionEnabled = NO;
+                    self.tableView.contentOffset          = CGPointZero;
+                }else{
+                    //则以tableview的代理scrollViewDidScroll偏移值为判断依据
+                }
             }else{
-                //则以tableview的代理scrollViewDidScroll偏移值为判断依据
+                self.hasContainsTopContent = YES;
+                self.tableView.contentOffset          = CGPointZero;
             }
         }
             break;
         case UIGestureRecognizerStateEnded:
         {
+            //如果是操作tableView.则不作手势处理
+            if (self.hasOptionTable && !self.hasContainsTopContent) {
+                return;
+            }
+            
             //手势结束.还原tableView的状态
-            self.tableView.scrollEnabled          = YES;
+            self.tableView.scrollEnabled          = self.hasTableViewEnable;
             self.tableView.userInteractionEnabled = YES;
             self.hasFirstOption                   = YES;
             /*
@@ -306,7 +379,9 @@
         if (!self.hasContainsTopContent) {
             
             self.containerView.FQ_y               = _fqTableViewOpenY;
-            self.tableView.contentOffset          = CGPointMake(0, self.tableView.contentOffset.y + _fqTableViewOpenY - offY);
+            if (self.hasTableViewEnable) {
+                self.tableView.contentOffset          = CGPointMake(0, self.tableView.contentOffset.y + _fqTableViewOpenY - offY);
+            }
         }
     }else{
         /*
@@ -316,10 +391,14 @@
         if (!self.hasContainsTopContent) {
             if (self.tableView.contentOffset.y > 0) {
                 self.containerView.FQ_y               = _fqTableViewOpenY;
-                self.tableView.contentOffset          = CGPointMake(0, self.tableView.contentOffset.y - transP.y);
+                if (self.hasTableViewEnable) {
+                    self.tableView.contentOffset          = CGPointMake(0, self.tableView.contentOffset.y - transP.y);
+                }
             }else{
                 self.containerView.FQ_y               = offY;
-                self.tableView.contentOffset          = CGPointZero;
+                if (self.hasTableViewEnable) {
+                    self.tableView.contentOffset          = CGPointZero;
+                }
             }
         }else{
             if (offY > _fqTableViewOpenY) {
@@ -345,7 +424,7 @@
     CGFloat offsetY                       = scrollView.contentOffset.y;
     if (self.hasFirstOption) {
         if (offsetY > 0) {
-            self.tableView.scrollEnabled          = YES;
+            self.tableView.scrollEnabled          = self.hasTableViewEnable;
             self.tableView.userInteractionEnabled = YES;
             self.hasOptionTable                   = YES;
             
@@ -364,14 +443,14 @@
 
 -(void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-    self.tableView.scrollEnabled          = YES;
+    self.tableView.scrollEnabled          = self.hasTableViewEnable;
     self.tableView.userInteractionEnabled = YES;
     self.hasFirstOption                   = YES;
 }
 
 -(void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-    self.tableView.scrollEnabled          = YES;
+    self.tableView.scrollEnabled          = self.hasTableViewEnable;
     self.tableView.userInteractionEnabled = YES;
     self.hasFirstOption                   = YES;
 }
@@ -391,8 +470,21 @@
 - (void)setDataSource:(id<QRFQSlidTableViewDataSource>)dataSource {
     _dataSource = dataSource;
     _dataSourceFlags.cellForItemAtIndex = [dataSource respondsToSelector:@selector(fqSlidTableView:cellForItemAtIndex:)];
+    _dataSourceFlags.viewForHeaderInSection = [dataSource respondsToSelector:@selector(fqSlidTableView:viewForHeaderInSection:)];
+    _dataSourceFlags.numberOfItemsInPagerView = [dataSource respondsToSelector:@selector(numberOfItemsInPagerView:)];
 }
 
+-(void)setHasTableViewEnable:(BOOL)hasTableViewEnable
+{
+    _hasTableViewEnable = hasTableViewEnable;
+    self.tableView.scrollEnabled = hasTableViewEnable;
+}
+
+-(void)setTableHeaderViewH:(CGFloat)tableHeaderViewH
+{
+    _tableHeaderViewH = tableHeaderViewH;
+    self.tableView.sectionHeaderHeight = tableHeaderViewH;
+}
 
 -(UIView *)topContentView
 {
@@ -413,8 +505,9 @@
         _tableView.tableFooterView          = [[UIView alloc]initWithFrame:CGRectZero];
         _tableView.sectionFooterHeight      = 15;
         _tableView.rowHeight = _tableViewRowH;
+        _tableView.sectionHeaderHeight = _tableHeaderViewH;
         _tableView.separatorStyle           = UITableViewCellSeparatorStyleSingleLine;
-        _tableView.separatorColor           = UIColor.blackColor;
+        _tableView.separatorColor           = UIColor.whiteColor;
         _tableView.separatorInset           = UIEdgeInsetsMake(0, 15, 0, 10);
     }
     return _tableView;
@@ -426,7 +519,9 @@
         _coverBtn                           = [UIButton buttonWithType:UIButtonTypeCustom];
         [_coverBtn addTarget:self action:@selector(dismissCoverView) forControlEvents:UIControlEventTouchUpInside];
         _coverBtn.backgroundColor           = [UIColor.blackColor colorWithAlphaComponent:0.5];
-        [self addSubview:_coverBtn];
+        self.coverBtn.alpha     = 0.0f;
+        [self.fq_superView addSubview:_coverBtn];
+        _coverBtn.hidden = !self.hasShowCoverBtn;
     }
     return _coverBtn;
 }
@@ -435,8 +530,7 @@
 {
     if (!_containerView) {
         _containerView                      = [[UIView alloc]init];
-        _containerView.backgroundColor      = UIColor.whiteColor;
-        [self addSubview:_containerView];
+        _containerView.backgroundColor      = UIColor.grayColor;
         //滑动手势
         UIPanGestureRecognizer * panGesture = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(panGestureRecognizer:)];
         panGesture.delegate                 = self;

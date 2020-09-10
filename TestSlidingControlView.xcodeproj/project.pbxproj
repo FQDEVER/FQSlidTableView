@@ -16,7 +16,7 @@
 		7AC6E03B244FFCA800B8A9CE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6E03A244FFCA800B8A9CE /* main.m */; };
 		7AC6E045244FFCA800B8A9CE /* TestSlidingControlViewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6E044244FFCA800B8A9CE /* TestSlidingControlViewTests.m */; };
 		7AC6E050244FFCA800B8A9CE /* TestSlidingControlViewUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6E04F244FFCA800B8A9CE /* TestSlidingControlViewUITests.m */; };
-		7AC6E05F244FFD1900B8A9CE /* QRFQSlidingControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6E05E244FFD1900B8A9CE /* QRFQSlidingControlView.m */; };
+		7AC6E05F244FFD1900B8A9CE /* QRFQSlidTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6E05E244FFD1900B8A9CE /* QRFQSlidTableView.m */; };
 		7AC6E062245039CC00B8A9CE /* EXFQCustomBtn.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AC6E060245039CC00B8A9CE /* EXFQCustomBtn.m */; };
 		D881915EB7B0DACE2082528F /* Pods_TestSlidingControlView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FF35575C8558A4D03510545 /* Pods_TestSlidingControlView.framework */; };
 /* End PBXBuildFile section */
@@ -57,8 +57,8 @@
 		7AC6E04B244FFCA800B8A9CE /* TestSlidingControlViewUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TestSlidingControlViewUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AC6E04F244FFCA800B8A9CE /* TestSlidingControlViewUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestSlidingControlViewUITests.m; sourceTree = "<group>"; };
 		7AC6E051244FFCA800B8A9CE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		7AC6E05D244FFD1900B8A9CE /* QRFQSlidingControlView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QRFQSlidingControlView.h; sourceTree = "<group>"; };
-		7AC6E05E244FFD1900B8A9CE /* QRFQSlidingControlView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRFQSlidingControlView.m; sourceTree = "<group>"; };
+		7AC6E05D244FFD1900B8A9CE /* QRFQSlidTableView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QRFQSlidTableView.h; sourceTree = "<group>"; };
+		7AC6E05E244FFD1900B8A9CE /* QRFQSlidTableView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = QRFQSlidTableView.m; sourceTree = "<group>"; };
 		7AC6E060245039CC00B8A9CE /* EXFQCustomBtn.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EXFQCustomBtn.m; sourceTree = "<group>"; };
 		7AC6E061245039CC00B8A9CE /* EXFQCustomBtn.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EXFQCustomBtn.h; sourceTree = "<group>"; };
 		8FF35575C8558A4D03510545 /* Pods_TestSlidingControlView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TestSlidingControlView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -139,8 +139,8 @@
 				7AC6E036244FFCA800B8A9CE /* LaunchScreen.storyboard */,
 				7AC6E039244FFCA800B8A9CE /* Info.plist */,
 				7AC6E03A244FFCA800B8A9CE /* main.m */,
-				7AC6E05D244FFD1900B8A9CE /* QRFQSlidingControlView.h */,
-				7AC6E05E244FFD1900B8A9CE /* QRFQSlidingControlView.m */,
+				7AC6E05D244FFD1900B8A9CE /* QRFQSlidTableView.h */,
+				7AC6E05E244FFD1900B8A9CE /* QRFQSlidTableView.m */,
 			);
 			path = TestSlidingControlView;
 			sourceTree = "<group>";
@@ -349,7 +349,7 @@
 				7AC6E02A244FFCA500B8A9CE /* AppDelegate.m in Sources */,
 				7AC6E03B244FFCA800B8A9CE /* main.m in Sources */,
 				7AC6E02D244FFCA500B8A9CE /* SceneDelegate.m in Sources */,
-				7AC6E05F244FFD1900B8A9CE /* QRFQSlidingControlView.m in Sources */,
+				7AC6E05F244FFD1900B8A9CE /* QRFQSlidTableView.m in Sources */,
 				7AC6E062245039CC00B8A9CE /* EXFQCustomBtn.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -523,6 +523,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = W9VXU65J5Z;
 				INFOPLIST_FILE = TestSlidingControlView/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -541,6 +542,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = W9VXU65J5Z;
 				INFOPLIST_FILE = TestSlidingControlView/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
